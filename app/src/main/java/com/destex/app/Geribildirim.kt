@@ -15,26 +15,38 @@ enum class Olay(val desen: LongArray) {
     Hata(longArrayOf(0, 500)),
 }
 
-class Geribildirim(context: Context) {
+class Geribildirim(private val context: Context) {
     private val titresim: Vibrator =
         (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+    private var tts: TextToSpeech? = null
     private var hazir = false
-    private val tts: TextToSpeech = TextToSpeech(context) { durum ->
-        if (durum == TextToSpeech.SUCCESS) {
-            hazir = true
-        }
-    }
 
     init {
-        tts.language = Locale("tr", "TR")
+        sesMotoruBaslat(SHERPA_MOTORU)
+    }
+
+    private fun sesMotoruBaslat(motor: String?) {
+        tts = TextToSpeech(context, { durum ->
+            if (durum == TextToSpeech.SUCCESS) {
+                tts?.language = Locale("tr", "TR")
+                hazir = true
+            } else if (motor != null) {
+                tts?.shutdown()
+                sesMotoruBaslat(null)
+            }
+        }, motor)
     }
 
     fun bildir(olay: Olay, cumle: String) {
         titresim.vibrate(VibrationEffect.createWaveform(olay.desen, -1))
-        if (hazir) tts.speak(cumle, TextToSpeech.QUEUE_FLUSH, null, olay.name)
+        if (hazir) tts?.speak(cumle, TextToSpeech.QUEUE_FLUSH, null, olay.name)
     }
 
     fun kapat() {
-        tts.shutdown()
+        tts?.shutdown()
+    }
+
+    companion object {
+        const val SHERPA_MOTORU = "org.woheller69.ttsengine"
     }
 }
