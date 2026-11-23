@@ -15,7 +15,12 @@ class SesTanima(
 ) {
     val kullanilabilir = SpeechRecognizer.isRecognitionAvailable(context)
     private val tanimlayici: SpeechRecognizer? =
-        if (kullanilabilir) SpeechRecognizer.createSpeechRecognizer(context) else null
+        try {
+            if (kullanilabilir) SpeechRecognizer.createSpeechRecognizer(context) else null
+        } catch (e: Exception) {
+            null
+        }
+    private var cevrimdisi = true
 
     init {
         tanimlayici?.setRecognitionListener(object : RecognitionListener {
@@ -30,14 +35,30 @@ class SesTanima(
             }
 
             override fun onError(kod: Int) {
+                when (kod) {
+                    SpeechRecognizer.ERROR_CLIENT -> return
+                    SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED,
+                    SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE -> {
+                        if (cevrimdisi) {
+                            cevrimdisi = false
+                            calistir()
+                        } else {
+                            hata("Türkçe ses tanıma paketi yüklü değil")
+                        }
+                        return
+                    }
+                }
                 hata(
                     when (kod) {
                         SpeechRecognizer.ERROR_NO_MATCH -> "Seni anlayamadım"
                         SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Ses duymadım"
                         SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Mikrofon izni yok"
+                        SpeechRecognizer.ERROR_AUDIO -> "Mikrofona erişemedim"
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Ses tanıma meşgul, tekrar dene"
                         SpeechRecognizer.ERROR_NETWORK,
                         SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "İnternet gerekiyor, ses tanıma çalışmadı"
-                        else -> "Ses tanıma hatası, kod $kod"
+                        SpeechRecognizer.ERROR_SERVER -> "Ses tanıma servisi hata verdi"
+                        else -> "Ses tanıma çalışmadı"
                     },
                 )
             }
@@ -52,13 +73,26 @@ class SesTanima(
     }
 
     fun baslat() {
+        cevrimdisi = true
+        calistir()
+    }
+
+    private fun calistir() {
         val niyet = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "tr-TR")
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, cevrimdisi)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
-        tanimlayici?.startListening(niyet)
+        try {
+            tanimlayici?.startListening(niyet)
+        } catch (e: Exception) {
+            hata("Ses tanımayı başlatamadım")
+        }
+    }
+
+    fun iptal() {
+        tanimlayici?.cancel()
     }
 
     fun kapat() {
