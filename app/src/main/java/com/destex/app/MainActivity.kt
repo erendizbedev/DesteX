@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 class MainActivity : ComponentActivity() {
     private lateinit var geri: Geribildirim
     private lateinit var tanima: SesTanima
+    private lateinit var komut: KomutIsleyici
 
     private var durum by mutableStateOf("Hazır, seni bekliyorum")
     private var duyulan by mutableStateOf("")
@@ -46,13 +47,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         geri = Geribildirim(this)
+        komut = KomutIsleyici(this) { startActivity(it) }
         tanima = SesTanima(
             this,
             kismi = { duyulan = it },
             sonuc = {
                 duyulan = it
                 durum = "Hazır, seni bekliyorum"
-                geri.bildir(Olay.DinlemeBitti, "Duydum: $it")
+                val cevap = komut.isle(it)
+                if (cevap != null) geri.bildir(cevap.first, cevap.second)
+                else geri.bildir(Olay.DinlemeBitti, "Duydum: $it")
             },
             hata = {
                 durum = "Hazır, seni bekliyorum"
