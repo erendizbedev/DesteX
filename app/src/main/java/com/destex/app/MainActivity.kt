@@ -30,9 +30,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -111,7 +108,7 @@ class MainActivity : ComponentActivity() {
 
     private fun dinle() {
         dinliyor = true
-        durum = "Dinliyorum"
+        durum = "Dinleniyor"
         duyulan = ""
         geri.bildir(Olay.DinlemeBasladi, null)
         tanima.baslat()
@@ -155,7 +152,6 @@ fun AnaEkran(durum: String, duyulan: String, konusBasildi: () -> Unit) {
             color = Renk.Vurgu,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
         Button(
             onClick = konusBasildi,
@@ -179,7 +175,6 @@ fun AnaEkran(durum: String, duyulan: String, konusBasildi: () -> Unit) {
                 color = Renk.Metin,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
     }
