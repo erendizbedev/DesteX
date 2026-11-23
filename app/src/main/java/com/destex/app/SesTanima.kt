@@ -3,6 +3,7 @@ package com.destex.app
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -25,9 +26,14 @@ class SesTanima(
     private val ses = context.getSystemService(AudioManager::class.java)
     private val sessizYapilan = mutableListOf<Int>()
 
-    private fun sustur() {
+    private fun sustur(muzikDahil: Boolean) {
         if (sessizYapilan.isNotEmpty()) return
-        for (akis in listOf(AudioManager.STREAM_MUSIC, AudioManager.STREAM_NOTIFICATION, AudioManager.STREAM_SYSTEM)) {
+        val akislar = if (muzikDahil) {
+            listOf(AudioManager.STREAM_MUSIC, AudioManager.STREAM_NOTIFICATION, AudioManager.STREAM_SYSTEM)
+        } else {
+            listOf(AudioManager.STREAM_NOTIFICATION, AudioManager.STREAM_SYSTEM)
+        }
+        for (akis in akislar) {
             try {
                 if (!ses.isStreamMute(akis)) {
                     ses.adjustStreamVolume(akis, AudioManager.ADJUST_MUTE, 0)
@@ -101,9 +107,9 @@ class SesTanima(
         })
     }
 
-    fun baslat() {
+    fun baslat(muzikSustur: Boolean = true) {
         cevrimdisi = true
-        sustur()
+        sustur(muzikSustur)
         calistir()
     }
 
@@ -113,6 +119,10 @@ class SesTanima(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "tr-TR")
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, cevrimdisi)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            if (Build.VERSION.SDK_INT >= 33) {
+                // Noktalama ve büyük harfi tanıma servisi kendisi yapsın
+                putExtra(RecognizerIntent.EXTRA_ENABLE_FORMATTING, RecognizerIntent.FORMATTING_OPTIMIZE_QUALITY)
+            }
         }
         try {
             tanimlayici?.startListening(niyet)

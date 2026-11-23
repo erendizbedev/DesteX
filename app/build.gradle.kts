@@ -11,8 +11,8 @@ android {
         applicationId = "com.destex.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
     }
     signingConfigs {
         getByName("debug") {
@@ -35,4 +35,5 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }
