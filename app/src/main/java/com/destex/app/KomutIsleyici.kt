@@ -38,6 +38,7 @@ class KomutIsleyici(
         val t = m.split(Regex("[^a-z0-9]+")).filter { it.isNotEmpty() }
         return try {
             when {
+                t.any { it.startsWith("bildirim") } -> bildirim(t)
                 t.any { it.startsWith("fener") } ->
                     fener(!t.any { it.startsWith("kapat") || it.startsWith("sondur") })
                 t.any { it == "pil" || it.startsWith("pili") || it.startsWith("pilin") || it.startsWith("sarj") || it.startsWith("batarya") } ->
@@ -50,6 +51,22 @@ class KomutIsleyici(
         } catch (e: Exception) {
             Pair(Olay.Hata, "Komutu çalıştıramadım")
         }
+    }
+
+    private fun bildirim(t: List<String>): Pair<Olay, String> {
+        if (t.any { it.startsWith("otomatik") }) {
+            val kapat = t.any { it.startsWith("kapat") || it.startsWith("durdur") }
+            Ayar.otomatikBildirimYaz(context, !kapat)
+            return Pair(Olay.Basari, if (kapat) "Otomatik bildirim okuma kapatıldı" else "Otomatik bildirim okuma açıldı")
+        }
+        val izinliler = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners").orEmpty()
+        if (!izinliler.contains(context.packageName)) {
+            ekranAc(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return Pair(Olay.OnayGerekli, "Bildirimleri okumak için bildirim erişimi izni gerekiyor. İzin ekranını açtım, DesteX'i bul ve izin ver")
+        }
+        val liste = BildirimDinleyici.ornek?.aktifOzet().orEmpty()
+        if (liste.isEmpty()) return Pair(Olay.Basari, "Okunacak bildirim yok")
+        return Pair(Olay.Basari, "${liste.size} bildirim var. " + liste.joinToString(". "))
     }
 
     private fun fener(ac: Boolean): Pair<Olay, String> {

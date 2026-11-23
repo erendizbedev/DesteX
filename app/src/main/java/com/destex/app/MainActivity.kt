@@ -41,7 +41,11 @@ class MainActivity : ComponentActivity() {
 
     private var durum by mutableStateOf(HAZIR)
     private var duyulan by mutableStateOf("")
-    private var dinliyor = false
+    private var dinliyor: Boolean
+        get() = Durum.dinliyor
+        set(v) {
+            Durum.dinliyor = v
+        }
 
     private val izinIstegi =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { verildi ->
